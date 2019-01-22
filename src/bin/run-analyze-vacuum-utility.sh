@@ -63,7 +63,7 @@ else
         --ignore-errors ${IGNORE_ERRORS} \
         --analyze-flag ${ANALYZE_FLAG} \
         --vacuum-flag ${VACUUM_FLAG} \
-        --vacuum-parameter ${VACUUM_PARAMETER} \
+        --vacuum-parameter "${VACUUM_PARAMETER}" \
         --min-unsorted-pct ${MIN_UNSORTED_PCT} \
         --max-unsorted-pct ${MAX_UNSORTED_PCT} \
         --stats-off-pct ${STATS_OFF_PCT} \

@@ -38,6 +38,10 @@ NO_CONNECTION = 5
 
 debug = False
 
+# vacuum and analyze statements
+VACUUM_STATEMENT_POS = 0
+TABLE_NAME_POS = 1
+SCHEMA_NAME_POS = 2
 
 def execute_query(conn, query):
     cursor = conn.cursor()
@@ -204,7 +208,8 @@ def run_vacuum(conn,
                                          + ', Unsorted_pct : ' + coalesce(unsorted :: varchar(10),'null') 
                                          + ', Stats Off : ' + stats_off :: varchar(10)
                                          + ' */ ;' as statement,
-                                         "table" as table_name
+                                         "table" as table_name,
+                                         schema
                                   FROM svv_table_info
                                   WHERE (unsorted > %s or stats_off > %s)
                                     AND   size < %s
@@ -221,7 +226,8 @@ def run_vacuum(conn,
                                          + ', Unsorted_pct : ' + coalesce(unsorted :: varchar(10),'null')
                                          + ', Stats Off : ' + stats_off :: varchar(10)
                                          + ' */ ;' as statement,
-                                         "table" as table_name
+                                         "table" as table_name,
+                                         schema
                                   FROM svv_table_info
                                   WHERE (unsorted > %s or stats_off > %s)
                                     AND   size < %s
@@ -287,10 +293,9 @@ def run_vacuum(conn,
 
     vacuum_statements = execute_query(conn, get_vacuum_statement)
     comment("Found %s Tables requiring Vacuum and flagged by alert" % len(vacuum_statements))
-
     for vs in vacuum_statements:
-        statements.append(vs[0])
-        statements.append("analyze %s.\"%s\"" % (vs[2], vs[1]))
+        statements.append(vs[VACUUM_STATEMENT_POS])
+        statements.append("analyze %s.\"%s\"" % (vs[SCHEMA_NAME_POS], vs[TABLE_NAME_POS]))
 
     if not run_commands(conn, statements, cw=cw, cluster_name=cluster_name, suppress_errors=ignore_errors):
         if not ignore_errors:
@@ -337,8 +342,8 @@ def run_vacuum(conn,
         comment("Found %s Tables requiring Vacuum due to stale statistics" % len(vacuum_statements))
 
         for vs in vacuum_statements:
-            statements.append(vs[0])
-            statements.append("analyze %s.\"%s\"" % (vs[2], vs[1]))
+            statements.append(vs[VACUUM_STATEMENT_POS])
+            statements.append("analyze %s.\"%s\"" % (vs[SCHEMA_NAME_POS], vs[TABLE_NAME_POS]))
 
         if not run_commands(conn, statements, cw=cw, cluster_name=cluster_name, suppress_errors=ignore_errors):
             if not ignore_errors:
@@ -379,8 +384,8 @@ def run_vacuum(conn,
         comment("Found %s Tables with Interleaved Sort Keys requiring Vacuum" % len(vacuum_statements))
 
         for vs in vacuum_statements:
-            statements.append(vs[0])
-            statements.append("analyze %s.\"%s\"" % (vs[2], vs[1]))
+            statements.append(vs[VACUUM_STATEMENT_POS])
+            statements.append("analyze %s.\"%s\"" % (vs[SCHEMA_NAME_POS], vs[TABLE_NAME_POS]))
 
         if not run_commands(conn, statements, cw=cw, cluster_name=cluster_name, suppress_errors=ignore_errors):
             if not ignore_errors:
