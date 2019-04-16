@@ -9,13 +9,13 @@ REDIS_URL=${REDIS_URL:-}
 
 REDIS="redis-cli"
 LOCK_KEY="locking:tasks:solo:RedAggregateDevicesAndUsersJob"
-BREAK_ON="1"
+BREAK_ON="OK"
 
 REDIS_CMD="$REDIS -u $REDIS_URL"
 RELEASE_CMD="echo \"DEL $LOCK_KEY\" | $REDIS_CMD"
 
 tryLock () {
-  local redis_order="SETNX $LOCK_KEY `date -u +"%Y-%m-%dT%H:%M:%SZ"` EX 1200"
+  local redis_order="SET $LOCK_KEY `date -u +"%Y-%m-%dT%H:%M:%SZ"` EX 1200 NX"
   local cmd="echo \"$redis_order\" | $REDIS_CMD"
   local result=$(eval $cmd)
   echo $result
